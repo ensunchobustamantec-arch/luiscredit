@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LuisCrédit</title>
+  <meta name="description" content="App de gestión de préstamos" />
+  <meta name="theme-color" content="#185FA5" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Tabler Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      background: #f0f2f5;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Login ── */
+    #login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+      background: #f0f2f5;
+    }
+
+    .login-logo { font-size: 60px; color: #185FA5; margin-bottom: 8px; }
+    .login-title { font-size: 26px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+    .login-accent { color: #185FA5; }
+    .login-sub { font-size: 14px; color: #666; margin-bottom: 32px; }
+
+    .login-card {
+      width: 100%;
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #e0e0e0;
+      padding: 24px;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; font-weight: 500; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d0d0d0;
+      border-radius: 10px;
+      font-size: 15px;
+      background: #fff;
+      color: #1a1a1a;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus { border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24,95,165,0.1); }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: #185FA5;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { background: #0C447C; }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .login-error {
+      color: #A32D2D;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 12px;
+      display: none;
+      background: #FCEBEB;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    /* ── Main ── */
+    #main-screen { display: none; }
+
+    .topbar {
+      background: #fff;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #e8e8e8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar h1 { font-size: 19px; font-weight: 600; color: #1a1a1a; }
+    .topbar p  { font-size: 12px; color: #888; margin-top: 1px; }
+    .logout-btn { background: none; border: none; cursor: pointer; color: #888; font-size: 24px; padding: 4px; }
+
+    .nav {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+      position: sticky;
+      top: 58px;
+      z-index: 9;
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 10px 4px 8px;
+      border: none;
+      background: transparent;
+      font-size: 10px;
+      color: #999;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-family: inherit;
+    }
+    .nav-btn i { font-size: 22px; }
+    .nav-btn.active { color: #185FA5; border-bottom: 2px solid #185FA5; }
+
+    .screen { display: none; padding: 14px; padding-bottom: 80px; }
+    .screen.active { display: block; }
+
+    /* ── Stats ── */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px;
+      border: 1px solid #eee;
+    }
+    .stat-card .label { font-size: 11px; color: #888; margin-bottom: 5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+    .stat-card .value { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+    .stat-card .value.green { color: #2d7a1f; }
+    .stat-card .value.red   { color: #c0392b; }
+    .stat-card .value.blue  { color: #185FA5; }
+
+    .section-title { font-size: 12px; font-weight: 600; color: #888; margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* ── Loan cards ── */
+    .loan-card {
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #eee;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .loan-card:active { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .loan-card .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .loan-card .name { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+    .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+    .badge.active { background: #e8f5e9; color: #2d7a1f; }
+    .badge.late   { background: #fdecea; color: #c0392b; }
+    .badge.paid   { background: #e3f0fd; color: #185FA5; }
+    .loan-card .detail { display: flex; justify-content: space-between; font-size: 12px; color: #888; }
+    .loan-card .owed   { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-top: 6px; }
+
+    /* ── Preview box ── */
+    .preview-box {
+      background: #f7f9fc;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      border: 1px solid #e0e8f0;
+      display: none;
+    }
+    .preview-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+    .preview-row span:first-child { color: #666; }
+    .preview-row span:last-child  { font-weight: 600; color: #1a1a1a; }
+    .preview-row.total { border-top: 1px solid #ddd; margin-top: 4px; padding-top: 8px; }
+    .preview-row.total span { font-size: 14px; color: #185FA5; }
+
+    /* ── Alert cards ── */
+    .alert-card {
+      background: #fdecea;
+      border: 1px solid #f5c6c3;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .alert-card .alert-name   { font-size: 15px; font-weight: 600; color: #7b1a1a; }
+    .alert-card .alert-detail { font-size: 13px; color: #c0392b; margin-top: 4px; }
+
+    /* ── Historial ── */
+    .hist-container { background: #fff; border-radius: 14px; border: 1px solid #eee; padding: 0 16px; }
+    .hist-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+    .hist-row:last-child { border-bottom: none; }
+    .hist-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+    .hist-date { font-size: 12px; color: #888; margin-top: 2px; }
+    .hist-amount { font-size: 15px; font-weight: 700; }
+    .hist-amount.payment { color: #2d7a1f; }
+    .hist-amount.loan    { color: #185FA5; }
+
+    .empty {
+      text-align: center;
+      padding: 40px 16px;
+      color: #aaa;
+      font-size: 14px;
+    }
+    .empty i { font-size: 40px; display: block; margin-bottom: 10px; color: #ddd; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      padding: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-inner {
+      background: #fff;
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 390px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .modal-title  { font-size: 17px; font-weight: 600; color: #1a1a1a; }
+    .close-btn    { background: none; border: none; cursor: pointer; font-size: 24px; color: #888; }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: #185FA5;
+      border: 1.5px solid #185FA5;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════ LOGIN ══════════ -->
+  <div id="login-screen">
+    <div class="login-logo"><i class="ti ti-building-bank"></i></div>
+    <div class="login-title">Luis<span class="login-accent">Crédit</span></div>
+    <div class="login-sub">Gestión de préstamos</div>
+    <div class="login-card">
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="inp-user" placeholder="Tu usuario" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="inp-pass" placeholder="Tu contraseña" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter') doLogin()" />
+      </div>
+      <button class="btn-primary" onclick="doLogin()">
+        <i class="ti ti-login" style="margin-right:6px;"></i>Entrar
+      </button>
+      <div class="login-error" id="login-error">
+        <i class="ti ti-alert-circle" style="margin-right:4px;"></i>Usuario o contraseña incorrectos
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <div id="main-screen">
+    <div class="topbar">
+      <div>
+        <h1><i class="ti ti-building-bank" style="color:#185FA5; margin-right:6px; font-size:20px; vertical-align:-3px;"></i>Luis<span style="color:#185FA5;">Crédit</span></h1>
+        <p>Panel de préstamos</p>
+      </div>
+      <button class="logout-btn" onclick="doLogout()" title="Cerrar sesión">
+        <i class="ti ti-logout"></i>
+      </button>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn active" onclick="showScreen('inicio')"><i class="ti ti-home"></i>Inicio</button>
+      <button class="nav-btn" onclick="showScreen('clientes')"><i class="ti ti-users"></i>Clientes</button>
+      <button class="nav-btn" onclick="showScreen('nuevo')"><i class="ti ti-plus"></i>Nuevo</button>
+      <button class="nav-btn" onclick="showScreen('alertas')"><i class="ti ti-bell"></i>Alertas</button>
+      <button class="nav-btn" onclick="showScreen('historial')"><i class="ti ti-history"></i>Historial</button>
+    </div>
+
+    <!-- INICIO -->
+    <div id="screen-inicio" class="screen active">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="label">Total prestado</div><div class="value blue" id="stat-total">$0</div></div>
+        <div class="stat-card"><div class="label">Por cobrar</div><div class="value green" id="stat-cobrar">$0</div></div>
+        <div class="stat-card"><div class="label">Clientes activos</div><div class="value" id="stat-clientes">0</div></div>
+        <div class="stat-card"><div class="label">Vencidos</div><div class="value red" id="stat-vencidos">0</div></div>
+      </div>
+      <div class="section-title">Préstamos recientes</div>
+      <div id="lista-recientes"><div class="empty"><i class="ti ti-clipboard-list"></i>Aún no hay préstamos registrados</div></div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div id="screen-clientes" class="screen">
+      <div class="section-title">Todos los clientes</div>
+      <div id="lista-clientes"><div class="empty"><i class="ti ti-users"></i>Aún no hay clientes</div></div>
+    </div>
+
+    <!-- NUEVO PRÉSTAMO -->
+    <div id="screen-nuevo" class="screen">
+      <div class="section-title">Registrar préstamo</div>
+      <div class="form-group"><label>Nombre del cliente</label><input type="text" id="inp-nombre" placeholder="Ej: Juan García" /></div>
+      <div class="form-group"><label>Monto prestado ($)</label><input type="number" id="inp-monto" placeholder="Ej: 500000" oninput="calcPreview()" /></div>
+      <div class="form-group"><label>Interés mensual (%)</label><input type="number" id="inp-interes" placeholder="Ej: 5" value="5" oninput="calcPreview()" /></div>
+      <div class="form-group"><label>Plazo (meses)</label><input type="number" id="inp-plazo" placeholder="Ej: 6" value="6" oninput="calcPreview()" /></div>
+      <div class="form-group"><label>Fecha del préstamo</label><input type="date" id="inp-fecha" /></div>
+      <div class="preview-box" id="preview-box">
+        <div class="preview-row"><span>Capital</span><span id="prev-capital">-</span></div>
+        <div class="preview-row"><span>Interés total</span><span id="prev-interes">-</span></div>
+        <div class="preview-row"><span>Cuota mensual</span><span id="prev-cuota">-</span></div>
+        <div class="preview-row total"><span>Total a cobrar</span><span id="prev-total">-</span></div>
+      </div>
+      <button class="btn-primary" onclick="registrarPrestamo()" style="margin-top:14px;">
+        <i class="ti ti-device-floppy" style="margin-right:6px;"></i>Guardar préstamo
+      </button>
+    </div>
+
+    <!-- ALERTAS -->
+    <div id="screen-alertas" class="screen">
+      <div class="section-title">Pagos vencidos</div>
+      <div id="lista-alertas"><div class="empty"><i class="ti ti-bell-off"></i>Sin alertas — todo al día</div></div>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div id="screen-historial" class="screen">
+      <div class="section-title">Todos los movimientos</div>
+      <div id="lista-historial"><div class="empty"><i class="ti ti-history"></i>Sin movimientos aún</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════ MODAL DETALLE ══════════ -->
+  <div class="modal-overlay" id="modal-detalle">
+    <div class="modal-inner">
+      <div class="modal-header">
+        <span class="modal-title" id="det-nombre"></span>
+        <button class="close-btn" onclick="cerrarDetalle()"><i class="ti ti-x"></i></button>
+      </div>
+      <div id="det-body"></div>
+      <div style="margin-top:14px;">
+        <div class="form-group">
+          <label>Registrar abono ($)</label>
+          <input type="number" id="inp-abono" placeholder="Monto del pago" />
+        </div>
+        <button class="btn-primary" onclick="registrarAbono()">
+          <i class="ti ti-cash" style="margin-right:6px;"></i>Registrar pago
+        </button>
+        <button class="btn-secondary" onclick="cerrarDetalle()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const USUARIO = 'Luisensuncho';
+  const CLAVE   = 'Luisensuncho123*';
+
+  let loans   = JSON.parse(localStorage.getItem('luiscredit_loans')   || '[]');
+  let history = JSON.parse(localStorage.getItem('luiscredit_history') || '[]');
+  let selectedLoan = null;
+
+  function save() {
+    localStorage.setItem('luiscredit_loans',   JSON.stringify(loans));
+    localStorage.setItem('luiscredit_history', JSON.stringify(history));
+  }
+
+  function fmt(n) {
+    return '$' + Math.round(n).toLocaleString('es-CO');
+  }
+
+  function calcDebt(loan) {
+    const total = loan.monto * (1 + (loan.interes / 100) * loan.plazo);
+    return Math.max(0, total - loan.pagado);
+  }
+
+  function doLogin() {
+    const u   = document.getElementById('inp-user').value.trim();
+    const p   = document.getElementById('inp-pass').value;
+    const err = document.getElementById('login-error');
+    if (u === USUARIO && p === CLAVE) {
+      err.style.display = 'none';
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('main-screen').style.display  = 'block';
+      renderInicio();
+    } else {
+      err.style.display = 'block';
+      document.getElementById('inp-pass').value = '';
+      document.getElementById('inp-pass').focus();
+    }
+  }
+
+  function doLogout() {
+    document.getElementById('main-screen').style.display  = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('inp-user').value = '';
+    document.getElementById('inp-pass').value = '';
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    const idx = ['inicio','clientes','nuevo','alertas','historial'].indexOf(id);
+    document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+    if (id === 'inicio')    renderInicio();
+    if (id === 'clientes')  renderClientes();
+    if (id === 'alertas')   renderAlertas();
+    if (id === 'historial') renderHistorial();
+  }
+
+  function calcPreview() {
+    const m = parseFloat(document.getElementById('inp-monto').value)   || 0;
+    const i = parseFloat(document.getElementById('inp-interes').value) || 0;
+    const p = parseFloat(document.getElementById('inp-plazo').value)   || 0;
+    const box = document.getElementById('preview-box');
+    if (m > 0 && i > 0 && p > 0) {
+      box.style.display = 'block';
+      const intTotal = m * (i / 100) * p;
+      const total    = m + intTotal;
+      document.getElementById('prev-capital').textContent = fmt(m);
+      document.getElementById('prev-interes').textContent = fmt(intTotal);
+      document.getElementById('prev-cuota').textContent   = fmt(total / p) + ' / mes';
+      document.getElementById('prev-total').textContent   = fmt(total);
+    } else {
+      box.style.display = 'none';
+    }
+  }
+
+  function registrarPrestamo() {
+    const nombre  = document.getElementById('inp-nombre').value.trim();
+    const monto   = parseFloat(document.getElementById('inp-monto').value);
+    const interes = parseFloat(document.getElementById('inp-interes').value);
+    const plazo   = parseInt(document.getElementById('inp-plazo').value);
+    const fecha   = document.getElementById('inp-fecha').value || new Date().toISOString().split('T')[0];
+    if (!nombre || !monto || !interes || !plazo) {
+      alert('Por favor completa todos los campos.');
+      return;
+    }
+    const loan = { id: Date.now(), nombre, monto, interes, plazo, fecha, pagado: 0, estado: 'activo' };
+    loans.unshift(loan);
+    history.unshift({ tipo: 'prestamo', nombre, monto, fecha: new Date().toLocaleDateString('es-CO'), id: loan.id });
+    save();
+    document.getElementById('inp-nombre').value = '';
+    document.getElementById('inp-monto').value  = '';
+    document.getElementById('inp-plazo').value  = '6';
+    document.getElementById('preview-box').style.display = 'none';
+    alert('Préstamo registrado para ' + nombre);
+    showScreen('inicio');
+  }
+
+  function loanCard(l) {
+    const deuda = calcDebt(l);
+    const badge = l.estado === 'vencido' ? '<span class="badge late">Vencido</span>'
+      : deuda <= 0 ? '<span class="badge paid">Pagado</span>'
+      : '<span class="badge active">Activo</span>';
+    return `<div class="loan-card" onclick="verDetalle(${l.id})">
+      <div class="top"><span class="name">${l.nombre}</span>${badge}</div>
+      <div class="detail"><span>${l.interes}% mensual &middot; ${l.plazo} meses</span><span>${l.fecha}</span></div>
+      <div class="owed">Por cobrar: ${fmt(deuda)}</div>
+    </div>`;
+  }
+
+  function renderInicio() {
+    const activos   = loans.filter(l => l.estado === 'activo');
+    const vencidos  = loans.filter(l => l.estado === 'vencido').length;
+    const totalPres = loans.reduce((a, l) => a + l.monto, 0);
+    const porCobrar = activos.reduce((a, l) => a + calcDebt(l), 0);
+    document.getElementById('stat-total').textContent    = fmt(totalPres);
+    document.getElementById('stat-cobrar').textContent   = fmt(porCobrar);
+    document.getElementById('stat-clientes').textContent = activos.length;
+    document.getElementById('stat-vencidos').textContent = vencidos;
+    const cont = document.getElementById('lista-recientes');
+    cont.innerHTML = loans.length
+      ? loans.slice(0, 6).map(loanCard).join('')
+      : '<div class="empty"><i class="ti ti-clipboard-list"></i>Aún no hay préstamos registrados</div>';
+  }
+
+  function renderClientes() {
+    const cont = document.getElementById('lista-clientes');
+    cont.innerHTML = loans.length
+      ? loans.map(loanCard).join('')
+      : '<div class="empty"><i class="ti ti-users"></i>Aún no hay clientes</div>';
+  }
+
+  function renderAlertas() {
+    const hoy  = new Date();
+    const cont = document.getElementById('lista-alertas');
+    const late = loans.filter(l => {
+      if (calcDebt(l) <= 0) return false;
+      const inicio = new Date(l.fecha);
+      return Math.floor((hoy - inicio) / 86400000) > l.plazo * 30;
+    });
+    late.forEach(l => { l.estado = 'vencido'; });
+    if (late.length) save();
+    cont.innerHTML = late.length
+      ? late.map(l => `<div class="alert-card" onclick="verDetalle(${l.id})">
+          <div class="alert-name"><i class="ti ti-alert-circle" style="margin-right:6px;"></i>${l.nombre}</div>
+          <div class="alert-detail">Debe: ${fmt(calcDebt(l))} — plazo vencido</div>
+        </div>`).join('')
+      : '<div class="empty"><i class="ti ti-bell-off"></i>Sin alertas — todo al día</div>';
+  }
+
+  function renderHistorial() {
+    const cont = document.getElementById('lista-historial');
+    cont.innerHTML = history.length
+      ? '<div class="hist-container">' + history.map(h => `
+          <div class="hist-row">
+            <div>
+              <div class="hist-name">${h.nombre}</div>
+              <div class="hist-date">${h.tipo === 'prestamo' ? 'Préstamo' : 'Abono'} · ${h.fecha}</div>
+            </div>
+            <span class="hist-amount ${h.tipo === 'pago' ? 'payment' : 'loan'}">
+              ${h.tipo === 'pago' ? '+' : ''}${fmt(h.monto)}
+            </span>
+          </div>`).join('') + '</div>'
+      : '<div class="empty"><i class="ti ti-history"></i>Sin movimientos aún</div>';
+  }
+
+  function verDetalle(id) {
+    selectedLoan = loans.find(l => l.id === id);
+    if (!selectedLoan) return;
+    const l        = selectedLoan;
+    const deuda    = calcDebt(l);
+    const totalCon = l.monto * (1 + (l.interes / 100) * l.plazo);
+    document.getElementById('det-nombre').textContent = l.nombre;
+    document.getElementById('det-body').innerHTML = `
+      <div style="background:#f7f9fc;border-radius:12px;padding:14px;border:1px solid #e0e8f0;">
+        <div class="preview-row"><span>Capital prestado</span><span>${fmt(l.monto)}</span></div>
+        <div class="preview-row"><span>Interés (${l.interes}%/mes · ${l.plazo} meses)</span><span>${fmt(totalCon - l.monto)}</span></div>
+        <div class="preview-row"><span>Total con intereses</span><span>${fmt(totalCon)}</span></div>
+        <div class="preview-row"><span>Ya pagó</span><span style="color:#2d7a1f;font-weight:600;">${fmt(l.pagado)}</span></div>
+        <div class="preview-row" style="border-top:1px solid #ddd;margin-top:6px;padding-top:10px;">
+          <span style="font-weight:600;">Saldo pendiente</span>
+          <span style="font-weight:700;color:#c0392b;font-size:15px;">${fmt(deuda)}</span>
+        </div>
+      </div>`;
+    document.getElementById('modal-detalle').classList.add('open');
+    document.getElementById('inp-abono').value = '';
+  }
+
+  function cerrarDetalle() {
+    document.getElementById('modal-detalle').classList.remove('open');
+    selectedLoan = null;
+  }
+
+  function registrarAbono() {
+    if (!selectedLoan) return;
+    const monto = parseFloat(document.getElementById('inp-abono').value);
+    if (!monto || monto <= 0) { alert('Ingresa un monto válido.'); return; }
+    selectedLoan.pagado += monto;
+    if (calcDebt(selectedLoan) <= 0) selectedLoan.estado = 'pagado';
+    history.unshift({ tipo: 'pago', nombre: selectedLoan.nombre, monto, fecha: new Date().toLocaleDateString('es-CO'), id: selectedLoan.id });
+    save();
+    alert('Pago de ' + fmt(monto) + ' registrado para ' + selectedLoan.nombre);
+    cerrarDetalle();
+    renderInicio();
+  }
+
+  document.getElementById('inp-fecha').value = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
